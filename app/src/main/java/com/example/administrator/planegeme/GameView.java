@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -36,7 +37,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private boolean state=false;
 
     private FeijiImage selectFeiji;//选中的飞机
-    private ArrayList<Zidan> zidans = new ArrayList<>();
+    private ArrayList<GameImage> zidans = new ArrayList<>();
 
 
     public GameView(Context context) {
@@ -99,6 +100,10 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 Canvas cacheCanvas=new Canvas(cacheBitmap);//二级缓存的画布
                 //克隆一份集合
                 for (GameImage gameImage:(List<GameImage>)mGameImageList.clone()){
+                    if (gameImage instanceof DijiImage){
+                        //当绘画敌机时，调用一次收到攻击的方法
+                        ((DijiImage) gameImage).shouDaoGongJi(zidans);
+                    }
                     cacheCanvas.drawBitmap(gameImage.getBitmap(),gameImage.getX(),gameImage.getY(),cachePaint);
                 }
 
@@ -316,6 +321,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         private int index=0;
         private int num=0;
 
+        private int width;
+        private int height;
+
         public DijiImage(Bitmap diren){
             this.diren=diren;
             bitmaps.add(Bitmap.createBitmap(diren,0,0,diren.getWidth()/4,diren.getHeight()));
@@ -323,14 +331,14 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*2,0,diren.getWidth()/4,diren.getHeight()));
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*3,0,diren.getWidth()/4,diren.getHeight()));
 
+            width=diren.getWidth()/4;
+            height=diren.getHeight();
+
             y=-diren.getHeight();
             //用随机数来定义敌机的坐标
             Random ran=new Random();
             x=ran.nextInt(bitmapWidth-(diren.getWidth()/4));
         }
-
-
-
 
 
         public Bitmap getBitmap() {
@@ -349,6 +357,19 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 mGameImageList.remove(this);
             }
             return bitmap;
+        }
+
+        /**
+         * 敌机收到攻击
+         * */
+     public void shouDaoGongJi(ArrayList<GameImage> zidans){
+            for (GameImage zidan:zidans){
+                //判断是否被子弹打中
+                if (zidan.getX()>x&&zidan.getY()>y&&zidan.getX()<x+width&&zidan.getY()<y+height){
+                    //敌机被击中
+                    Log.d("shouDaoGongJi","击中了！！！！！");
+                }
+            }
         }
 
         @Override
