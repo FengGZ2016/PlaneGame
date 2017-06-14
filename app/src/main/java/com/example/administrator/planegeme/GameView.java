@@ -14,6 +14,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by Administrator on 2017/5/19.
@@ -30,9 +31,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private Bitmap diren;//敌人
     private Bitmap zidan;//子弹
     private List<GameImage> mGameImageList=new ArrayList<>();
-    private boolean state=false;
     private SurfaceHolder mSurfaceHolder;
     private Bitmap cacheBitmap;//二级缓存的照片
+    private boolean state=false;
 
     private FeijiImage selectFeiji;//选中的飞机
 
@@ -58,6 +59,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         cacheBitmap= Bitmap.createBitmap(bitmapWidth,bitmapHeight, Bitmap.Config.ARGB_8888);
         mGameImageList.add(new BgImage(bg));
         mGameImageList.add(new FeijiImage(my));
+        mGameImageList.add(new DijiImage(diren));
     }
 
     @Override
@@ -274,5 +276,64 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
 
 
+    }
+
+
+    /**
+     * 敌机类
+     * */
+    private class DijiImage implements GameImage{
+
+        private Bitmap diren=null;
+        private int x;
+        private int y;
+        private List<Bitmap> bitmaps=new ArrayList<>();
+        private int index=0;
+        private int num=0;
+
+        public DijiImage(Bitmap diren){
+            this.diren=diren;
+            bitmaps.add(Bitmap.createBitmap(diren,0,0,diren.getWidth()/4,diren.getHeight()));
+            bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*1,0,diren.getWidth()/4,diren.getHeight()));
+            bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*2,0,diren.getWidth()/4,diren.getHeight()));
+            bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*3,0,diren.getWidth()/4,diren.getHeight()));
+
+            //y=diren.getHeight();
+            //用随机数来定义敌机的坐标
+            Random ran=new Random();
+            x=ran.nextInt(bitmapWidth-(diren.getWidth()/4));
+        }
+
+
+
+
+
+        public Bitmap getBitmap() {
+            Bitmap bitmap=bitmaps.get(index);
+            if (num==7){
+                index++;
+                if (index==bitmaps.size()){
+                    index=0;
+                }
+                num=0;
+            }
+            y+=2;
+            num++;
+            if (y>bitmapHeight){
+                //敌机越界，清除敌机
+                mGameImageList.remove(this);
+            }
+            return bitmap;
+        }
+
+        @Override
+        public int getX() {
+            return x;
+        }
+
+        @Override
+        public int getY() {
+            return y;
+        }
     }
 }
