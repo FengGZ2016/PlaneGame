@@ -36,6 +36,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private boolean state=false;
 
     private FeijiImage selectFeiji;//选中的飞机
+    private ArrayList<Zidan> zidans = new ArrayList<>();
+
 
     public GameView(Context context) {
         super(context);
@@ -83,14 +85,29 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     public void run() {
         Paint cachePaint=new Paint();
         int direnNum=0;
+        int zidanNum=0;
         try {
             while (state){
+                if (selectFeiji!=null){
+                    if (zidanNum==5){
+                        zidans.add(new Zidan(selectFeiji,zidan));
+                        zidanNum=0;
+                    }
+                   zidanNum++;
+                }
+
                 Canvas cacheCanvas=new Canvas(cacheBitmap);//二级缓存的画布
                 //克隆一份集合
                 for (GameImage gameImage:(List<GameImage>)mGameImageList.clone()){
                     cacheCanvas.drawBitmap(gameImage.getBitmap(),gameImage.getX(),gameImage.getY(),cachePaint);
                 }
-                if (direnNum==200){
+
+                //画子弹
+               for (GameImage zidanImage:zidans){
+                   cacheCanvas.drawBitmap(zidanImage.getBitmap(),zidanImage.getX(),zidanImage.getY(),cachePaint);
+               }
+
+                if (direnNum==100){
                     direnNum=0;
                     //增加一台敌机
                     mGameImageList.add(new DijiImage(diren));
@@ -324,13 +341,50 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 }
                 num=0;
             }
-            y+=2;
+            y+=5;
             num++;
             if (y>bitmapHeight){
                 //敌机越界，清除敌机
                 mGameImageList.remove(this);
             }
             return bitmap;
+        }
+
+        @Override
+        public int getX() {
+            return x;
+        }
+
+        @Override
+        public int getY() {
+            return y;
+        }
+    }
+
+    /**
+     * 子弹类
+     * */
+    private class Zidan implements GameImage{
+        private FeijiImage feiji;
+        private Bitmap zidanBitmap;
+        private int x;
+        private int y;
+
+        public Zidan(FeijiImage feiji,Bitmap zidanBitmap){
+            this.feiji=feiji;
+            this.zidanBitmap=zidanBitmap;
+
+            x = (feiji.getX() + feiji.getWidth() / 2) - 8;
+            y = feiji.getY() - zidan.getHeight();
+        }
+
+        @Override
+        public Bitmap getBitmap() {
+            y -= 50;
+//            if (y <= -10) {
+//                zidans.remove(this);
+//            }
+            return zidanBitmap;
         }
 
         @Override
