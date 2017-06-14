@@ -103,7 +103,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 }
 
                 //画子弹
-               for (GameImage zidanImage:zidans){
+                //子弹也要克隆一份
+               for (GameImage zidanImage: (List<GameImage>)zidans.clone()){
                    cacheCanvas.drawBitmap(zidanImage.getBitmap(),zidanImage.getX(),zidanImage.getY(),cachePaint);
                }
 
@@ -381,9 +382,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         @Override
         public Bitmap getBitmap() {
             y -= 50;
-//            if (y <= -10) {
-//                zidans.remove(this);
-//            }
+           if (y <= -10) {
+                zidans.remove(this);
+           }
             return zidanBitmap;
         }
 
