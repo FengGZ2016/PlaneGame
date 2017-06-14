@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             dialog.create().show();
+            return false;
         }
 
         return super.onKeyDown(keyCode, event);

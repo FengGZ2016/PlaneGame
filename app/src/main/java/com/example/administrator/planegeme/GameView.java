@@ -7,6 +7,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -55,6 +57,12 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private boolean stopState = false;
     private Thread mThread=null;
 
+    //音效
+    private SoundPool pool = null;
+    private int sound_bomb = 0;
+    private int sound_gameover = 0;
+    private int sound_shot = 0;
+
     public GameView(Context context) {
         super(context);
         //注册回调方法
@@ -78,6 +86,31 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         mGameImageList.add(new BgImage(bg));
         mGameImageList.add(new FeijiImage(my));
         mGameImageList.add(new DijiImage(diren,baozha));
+
+        // //加载声音
+
+        pool = new SoundPool(10, AudioManager.STREAM_SYSTEM, 0);
+
+        sound_bomb = pool.load(getContext(), R.raw.bomb, 1);
+        sound_gameover = pool.load(getContext(), R.raw.gameover, 1);
+        sound_shot = pool.load(getContext(), R.raw.shot, 1);
+
+    }
+
+    /**
+     * 音效类
+     * */
+    private class SoundPlay extends Thread {
+        int i = 0;
+
+        public SoundPlay(int i) {
+            this.i = i;
+
+        }
+
+        public void run() {
+            pool.play(i, 1, 1, 1, 0, 1);
+        }
     }
 
     @Override
@@ -131,6 +164,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                }
                 if (selectFeiji!=null){
                     if (zidanNum==5){
+                        new SoundPlay(sound_shot).start();
                         zidans.add(new Zidan(selectFeiji,zidan));
                         zidanNum=0;
                     }
@@ -462,6 +496,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                      bitmaps=baozhas;
                      //打掉一个敌机加10分
                      jifen+=10;
+                     new SoundPlay(sound_bomb).start();
                      break;
                  }
              }
