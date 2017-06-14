@@ -43,6 +43,16 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private int guanqia=1;//关卡
     private int next=50;//下一关分数
 
+    //区分等级的二维数{等级，分数，速度，步伐}
+    private int[][] erweiArray = { { 1, 50, 30, 6 }, { 2, 100, 30, 7},
+            { 3, 200, 30, 8}, { 4, 300, 25, 9 }, { 5, 400, 25, 10 },
+            { 6, 500, 25, 11 }, { 7, 600, 20, 12 }, { 8, 700, 20, 13},
+            { 9, 800, 15, 14 }, { 10, 900, 10, 15 }, { 11, 1000, 10, 16},
+            { 12, 1100, 10, 17 } };
+    private int chudishu = 30; // 出敌机的速度
+    private int dijiyidong = 5; // 敌机移动的速度
+
+
 
     public GameView(Context context) {
         super(context);
@@ -125,7 +135,17 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 cacheCanvas.drawText("关:" + guanqia, 0, 100, paint);
                 cacheCanvas.drawText("下:" + next, 0, 150, paint);
 
-                if (direnNum==50){
+                if (erweiArray[guanqia - 1][1] <= jifen) {
+                        //达到一定积分时，通关
+                    chudishu = erweiArray[guanqia][2];
+                    dijiyidong = erweiArray[guanqia][3];
+                    jifen = erweiArray[guanqia - 1][1] - jifen;
+                    next = erweiArray[guanqia][1];
+                    guanqia = erweiArray[guanqia][0];
+
+                }
+
+                if (direnNum==chudishu){
                     direnNum=0;
                     //增加一台敌机
                     mGameImageList.add(new DijiImage(diren,baozha));
@@ -393,7 +413,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 }
                 num=0;
             }
-            y+=7;
+            y+=dijiyidong;
             num++;
             if (y>bitmapHeight){
                 //敌机越界，清除敌机
