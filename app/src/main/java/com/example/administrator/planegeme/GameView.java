@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.DisplayMetrics;
@@ -38,6 +39,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     private FeijiImage selectFeiji;//选中的飞机
     private ArrayList<GameImage> zidans = new ArrayList<>();
+    private int jifen=0;//积分
+    private int guanqia=1;//关卡
+    private int next=50;//下一关分数
 
 
     public GameView(Context context) {
@@ -85,6 +89,11 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     @Override
     public void run() {
         Paint cachePaint=new Paint();
+        Paint paint=new Paint();
+        paint.setColor(Color.RED);
+        paint.setTextSize(50);
+        paint.setDither(true);
+        paint.setAntiAlias(true);
         int direnNum=0;
         int zidanNum=0;
         try {
@@ -112,8 +121,11 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                for (GameImage zidanImage: (List<GameImage>)zidans.clone()){
                    cacheCanvas.drawBitmap(zidanImage.getBitmap(),zidanImage.getX(),zidanImage.getY(),cachePaint);
                }
+                cacheCanvas.drawText("分:" + jifen, 0, 50, paint);
+                cacheCanvas.drawText("关:" + guanqia, 0, 100, paint);
+                cacheCanvas.drawText("下:" + next, 0, 150, paint);
 
-                if (direnNum==100){
+                if (direnNum==50){
                     direnNum=0;
                     //增加一台敌机
                     mGameImageList.add(new DijiImage(diren,baozha));
@@ -381,7 +393,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 }
                 num=0;
             }
-            y+=5;
+            y+=7;
             num++;
             if (y>bitmapHeight){
                 //敌机越界，清除敌机
@@ -407,6 +419,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                      isKill=true;
                      //敌机的照片变成爆炸的照片
                      bitmaps=baozhas;
+                     //打掉一个敌机加10分
+                     jifen+=10;
                      break;
                  }
              }
