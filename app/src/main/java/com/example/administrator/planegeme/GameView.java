@@ -30,7 +30,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private Bitmap bg;//背景
     private Bitmap diren;//敌人
     private Bitmap zidan;//子弹
-    private List<GameImage> mGameImageList=new ArrayList<>();
+    private ArrayList<GameImage> mGameImageList=new ArrayList<>();
     private SurfaceHolder mSurfaceHolder;
     private Bitmap cacheBitmap;//二级缓存的照片
     private boolean state=false;
@@ -85,7 +85,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         try {
             while (state){
                 Canvas cacheCanvas=new Canvas(cacheBitmap);//二级缓存的画布
-                for (GameImage gameImage:mGameImageList){
+                //克隆一份集合
+                for (GameImage gameImage:(List<GameImage>)mGameImageList.clone()){
                     cacheCanvas.drawBitmap(gameImage.getBitmap(),gameImage.getX(),gameImage.getY(),cachePaint);
                 }
 
