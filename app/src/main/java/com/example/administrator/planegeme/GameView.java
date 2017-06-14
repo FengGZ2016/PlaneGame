@@ -52,7 +52,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private int chudishu = 30; // 出敌机的速度
     private int dijiyidong = 5; // 敌机移动的速度
 
-
+    private boolean stopState = false;
+    private Thread mThread=null;
 
     public GameView(Context context) {
         super(context);
@@ -88,12 +89,24 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         mSurfaceHolder=holder;
         state=true;
-        new Thread(this).start();
+        mThread=new Thread(this);
+        mThread.start();
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         state=false;
+    }
+
+
+
+    public void stop() {
+        stopState = true;
+    }
+
+    public void start() {
+        stopState = false;
+        mThread.interrupt();// 起来
     }
 
     @Override
@@ -108,6 +121,14 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         int zidanNum=0;
         try {
             while (state){
+               while (stopState){
+                   try {
+                       Thread.sleep(1000000);
+                   }catch (Exception e){
+
+                   }
+
+               }
                 if (selectFeiji!=null){
                     if (zidanNum==5){
                         zidans.add(new Zidan(selectFeiji,zidan));
