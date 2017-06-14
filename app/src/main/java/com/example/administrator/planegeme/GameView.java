@@ -372,6 +372,10 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             Bitmap bitmap=bitmaps.get(index);
             if (num==8){
                 index++;
+                if (index==baozhas.size()&&isKill){
+                    //敌机爆炸后去掉爆炸的痕迹
+                    mGameImageList.remove(this);
+                }
                 if (index==bitmaps.size()){
                     index=0;
                 }
