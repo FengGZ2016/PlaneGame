@@ -82,6 +82,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     @Override
     public void run() {
         Paint cachePaint=new Paint();
+        int direnNum=0;
         try {
             while (state){
                 Canvas cacheCanvas=new Canvas(cacheBitmap);//二级缓存的画布
@@ -89,13 +90,18 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 for (GameImage gameImage:(List<GameImage>)mGameImageList.clone()){
                     cacheCanvas.drawBitmap(gameImage.getBitmap(),gameImage.getX(),gameImage.getY(),cachePaint);
                 }
+                if (direnNum==200){
+                    direnNum=0;
+                    //增加一台敌机
+                    mGameImageList.add(new DijiImage(diren));
+                }
 
-
+                direnNum++;
 
                 Canvas canvas= mSurfaceHolder.lockCanvas();
                 canvas.drawBitmap(cacheBitmap,0,0,cachePaint);
                 mSurfaceHolder.unlockCanvasAndPost(canvas);
-                Thread.sleep(10);
+                Thread.sleep(5);
             }
         }catch (Exception e){
 
@@ -299,7 +305,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*2,0,diren.getWidth()/4,diren.getHeight()));
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*3,0,diren.getWidth()/4,diren.getHeight()));
 
-            //y=diren.getHeight();
+            y=-diren.getHeight();
             //用随机数来定义敌机的坐标
             Random ran=new Random();
             x=ran.nextInt(bitmapWidth-(diren.getWidth()/4));
@@ -311,7 +317,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
         public Bitmap getBitmap() {
             Bitmap bitmap=bitmaps.get(index);
-            if (num==7){
+            if (num==8){
                 index++;
                 if (index==bitmaps.size()){
                     index=0;
