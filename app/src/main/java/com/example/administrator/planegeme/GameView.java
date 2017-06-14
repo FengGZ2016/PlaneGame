@@ -34,10 +34,14 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private SurfaceHolder mSurfaceHolder;
     private Bitmap cacheBitmap;//二级缓存的照片
 
+    private FeijiImage selectFeiji;//选中的飞机
+
     public GameView(Context context) {
         super(context);
         //注册回调方法
         getHolder().addCallback(this);
+        //事件注册
+        this.setOnTouchListener(this);
         getWindomMetrics();
         init();
 
@@ -105,8 +109,42 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+             //按下
+            if (event.getAction()==MotionEvent.ACTION_DOWN){
+                //找到飞机照片
+                for (GameImage image:mGameImageList){
+                    if (image instanceof FeijiImage){
+                        //判断是否选中了飞机
+                        FeijiImage feiji = (FeijiImage) image;
+                        if (feiji.getX() < event.getX()
+                                && feiji.getY() < event.getY()
+                                && feiji.getX() + feiji.getWidth() > event.getX()
+                                && feiji.getY() + feiji.getHeight() > event.getY()) {
+                            //选中了
 
-        return false;
+                           selectFeiji = feiji;
+                        } else {
+                            //没有选中
+
+                            selectFeiji = null;
+                        }
+                        break;
+                    }
+                }
+                //移动
+            }else if (event.getAction()==MotionEvent.ACTION_MOVE){
+                    if (selectFeiji!=null){
+                        //随着移动更新坐标
+                        selectFeiji.setX((int) event.getX() - selectFeiji.getWidth()
+                                / 2);
+                        selectFeiji.setY((int) event.getY() - selectFeiji.getHeight()
+                                / 2);
+                    }
+                //松开
+            }else if (event.getAction()==MotionEvent.ACTION_UP){
+                selectFeiji = null;
+            }
+        return true;
     }
 
     /**
@@ -160,6 +198,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         private List<Bitmap> bitmaps = new ArrayList<Bitmap>();
         private int x;
         private int y;
+        private int width;//战机的宽
+        private int height;//战机的高
 
         private int index=0;
         private int num=0;
@@ -179,6 +219,27 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             x = (bitmapWidth - my.getWidth() / 4) / 2;
             y = bitmapHeight - my.getHeight() - 30;
 
+            //得到战机的宽和高
+            width=my.getWidth()/4;
+            height=my.getHeight();
+
+        }
+
+
+        public int getWidth() {
+            return width;
+        }
+
+        public void setWidth(int width) {
+            this.width = width;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        public void setHeight(int height) {
+            this.height = height;
         }
 
         public Bitmap getBitmap() {
