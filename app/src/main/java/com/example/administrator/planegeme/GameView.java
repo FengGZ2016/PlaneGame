@@ -62,7 +62,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         cacheBitmap= Bitmap.createBitmap(bitmapWidth,bitmapHeight, Bitmap.Config.ARGB_8888);
         mGameImageList.add(new BgImage(bg));
         mGameImageList.add(new FeijiImage(my));
-        mGameImageList.add(new DijiImage(diren));
+        mGameImageList.add(new DijiImage(diren,baozha));
     }
 
     @Override
@@ -116,7 +116,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 if (direnNum==100){
                     direnNum=0;
                     //增加一台敌机
-                    mGameImageList.add(new DijiImage(diren));
+                    mGameImageList.add(new DijiImage(diren,baozha));
                 }
 
                 direnNum++;
@@ -324,13 +324,40 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         private int width;
         private int height;
 
-        public DijiImage(Bitmap diren){
+        private List<Bitmap> baozhas=new ArrayList<>();
+
+        public DijiImage(Bitmap diren,Bitmap baozha){
             this.diren=diren;
+            //分解敌机的照片
             bitmaps.add(Bitmap.createBitmap(diren,0,0,diren.getWidth()/4,diren.getHeight()));
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*1,0,diren.getWidth()/4,diren.getHeight()));
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*2,0,diren.getWidth()/4,diren.getHeight()));
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*3,0,diren.getWidth()/4,diren.getHeight()));
+            //分解爆炸的照片
+            baozhas.add(Bitmap.createBitmap(baozha, 0, 0,
+                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+            baozhas.add(Bitmap.createBitmap(baozha,
+                    (baozha.getWidth() / 4) * 1, 0, baozha.getWidth() / 4,
+                    baozha.getHeight() / 2));
+            baozhas.add(Bitmap.createBitmap(baozha,
+                    (baozha.getWidth() / 4) * 2, 0, baozha.getWidth() / 4,
+                    baozha.getHeight() / 2));
+            baozhas.add(Bitmap.createBitmap(baozha,
+                    (baozha.getWidth() / 4) * 3, 0, baozha.getWidth() / 4,
+                    baozha.getHeight() / 2));
 
+            baozhas.add(Bitmap.createBitmap(baozha, 0, baozha.getHeight() / 2,
+                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+            baozhas.add(Bitmap.createBitmap(baozha,
+                    (baozha.getWidth() / 4) * 1, baozha.getHeight() / 2,
+                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+            baozhas.add(Bitmap.createBitmap(baozha,
+                    (baozha.getWidth() / 4) * 2, baozha.getHeight() / 2,
+                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+            baozhas.add(Bitmap.createBitmap(baozha,
+                    (baozha.getWidth() / 4) * 3, baozha.getHeight() / 2,
+                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+            //
             width=diren.getWidth()/4;
             height=diren.getHeight();
 
@@ -359,17 +386,28 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             return bitmap;
         }
 
+        private boolean isKill=false;//敌机是否被杀掉
         /**
          * 敌机收到攻击
          * */
      public void shouDaoGongJi(ArrayList<GameImage> zidans){
-            for (GameImage zidan:zidans){
-                //判断是否被子弹打中
-                if (zidan.getX()>x&&zidan.getY()>y&&zidan.getX()<x+width&&zidan.getY()<y+height){
-                    //敌机被击中
-                    Log.d("shouDaoGongJi","击中了！！！！！");
-                }
-            }
+
+         if (!isKill){
+             for (GameImage zidan:zidans){
+                 //判断是否被子弹打中
+                 if (zidan.getX()>x&&zidan.getY()>y&&zidan.getX()<x+width&&zidan.getY()<y+height){
+                     //敌机被击中
+                     Log.d("shouDaoGongJi","击中了！！！！！");
+                     //移除该子弹
+                     zidans.remove(zidan);
+                     isKill=true;
+                     //敌机的照片变成爆炸的照片
+                     bitmaps=baozhas;
+                     break;
+                 }
+             }
+         }
+
         }
 
         @Override
