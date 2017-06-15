@@ -1,6 +1,7 @@
 package com.example.administrator.planegeme;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -63,6 +64,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private int sound_gameover = 0;
     private int sound_shot = 0;
 
+    private boolean isOver=false;//敌机是否被杀掉
+
     public GameView(Context context) {
         super(context);
         //注册回调方法
@@ -85,9 +88,10 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         cacheBitmap= Bitmap.createBitmap(bitmapWidth,bitmapHeight, Bitmap.Config.ARGB_8888);
         mGameImageList.add(new BgImage(bg));
         mGameImageList.add(new FeijiImage(my));
-        mGameImageList.add(new DijiImage(diren,baozha));
+        mGameImageList.add(new DijiImage(diren));
 
-        // //加载声音
+        // 加载声音
+        //SoundPool：声音池（同时播放数，声音类型，声音转换质量）
 
         pool = new SoundPool(10, AudioManager.STREAM_SYSTEM, 0);
 
@@ -108,6 +112,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
         }
 
+        //pool.play(资源id，左声道，右声道，优先级，是否循环，速率)
         public void run() {
             pool.play(i, 1, 1, 1, 0, 1);
         }
@@ -142,6 +147,14 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         mThread.interrupt();// 起来
     }
 
+    public void reCome(){
+        invalidate();
+        state=true;
+        stopState = false;
+        mThread.interrupt();// 起来
+
+    }
+
     @Override
     public void run() {
         Paint cachePaint=new Paint();
@@ -162,6 +175,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                    }
 
                }
+
+
                 if (selectFeiji!=null){
                     if (zidanNum==5){
                         new SoundPlay(sound_shot).start();
@@ -177,6 +192,10 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                     if (gameImage instanceof DijiImage){
                         //当绘画敌机时，调用一次收到攻击的方法
                         ((DijiImage) gameImage).shouDaoGongJi(zidans);
+                    }
+                    if (gameImage instanceof FeijiImage){
+                        //当绘画战机时，调用一次战机被碰撞的方法
+                        ((FeijiImage) gameImage).shouDaoPengZhuang(mGameImageList);
                     }
                     cacheCanvas.drawBitmap(gameImage.getBitmap(),gameImage.getX(),gameImage.getY(),cachePaint);
                 }
@@ -203,7 +222,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 if (direnNum==chudishu){
                     direnNum=0;
                     //增加一台敌机
-                    mGameImageList.add(new DijiImage(diren,baozha));
+                    mGameImageList.add(new DijiImage(diren));
                 }
 
                 direnNum++;
@@ -218,6 +237,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
 
     }
+
+
 
     private void getWindomMetrics() {
         //得到屏幕的分辨率
@@ -322,6 +343,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
         private int index=0;
         private int num=0;
+        private List<Bitmap> baozhas=getBaozhas();
 
         public FeijiImage(Bitmap my){
             this.my=my;
@@ -342,6 +364,33 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             width=my.getWidth()/4;
             height=my.getHeight();
 
+        }
+
+        /**
+         * 战机受到碰撞
+         * */
+        public void shouDaoPengZhuang(List<GameImage> gameImages){
+            if (!isOver){
+                for (GameImage gameImage:gameImages){
+                    if (gameImage instanceof DijiImage){
+                        //判断战机是否被敌机碰撞
+                        if (gameImage.getX()>x&&gameImage.getY()>y&&gameImage.getX()<x+width&&gameImage.getY()<y+height){
+                            Log.d("shouDaoPengZhuang","战机被碰撞了！！");
+                           bitmaps=baozhas;
+                            new SoundPlay(sound_bomb).start();
+                            isOver=true;
+                            break;
+                        }
+                    }
+                }
+
+            }else {
+               //游戏结束，广播通知mainactivity
+                Intent intent=new Intent("com.example.administrator.planegeme");
+                getContext().sendBroadcast(intent);
+                new SoundPlay(sound_gameover).start();
+                stop();
+            }
         }
 
 
@@ -365,6 +414,10 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         Bitmap bitmap=bitmaps.get(index);
             if (num==7){
                 index++;
+                if (index==baozhas.size()&&isOver){
+                    //敌机爆炸后去掉爆炸的痕迹
+                    mGameImageList.remove(this);
+                }
                 if (index==bitmaps.size()){
                     index=0;
                 }
@@ -373,6 +426,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             num++;
             return bitmap;
         }
+
 
         public void setX(int x) {
             this.x = x;
@@ -411,9 +465,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         private int width;
         private int height;
 
-        private List<Bitmap> baozhas=new ArrayList<>();
+        private List<Bitmap> baozhas=getBaozhas();
 
-        public DijiImage(Bitmap diren,Bitmap baozha){
+        public DijiImage(Bitmap diren){
             this.diren=diren;
             //分解敌机的照片
             bitmaps.add(Bitmap.createBitmap(diren,0,0,diren.getWidth()/4,diren.getHeight()));
@@ -421,29 +475,29 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*2,0,diren.getWidth()/4,diren.getHeight()));
             bitmaps.add(Bitmap.createBitmap(diren,(diren.getWidth())/4*3,0,diren.getWidth()/4,diren.getHeight()));
             //分解爆炸的照片
-            baozhas.add(Bitmap.createBitmap(baozha, 0, 0,
-                    baozha.getWidth() / 4, baozha.getHeight() / 2));
-            baozhas.add(Bitmap.createBitmap(baozha,
-                    (baozha.getWidth() / 4) * 1, 0, baozha.getWidth() / 4,
-                    baozha.getHeight() / 2));
-            baozhas.add(Bitmap.createBitmap(baozha,
-                    (baozha.getWidth() / 4) * 2, 0, baozha.getWidth() / 4,
-                    baozha.getHeight() / 2));
-            baozhas.add(Bitmap.createBitmap(baozha,
-                    (baozha.getWidth() / 4) * 3, 0, baozha.getWidth() / 4,
-                    baozha.getHeight() / 2));
-
-            baozhas.add(Bitmap.createBitmap(baozha, 0, baozha.getHeight() / 2,
-                    baozha.getWidth() / 4, baozha.getHeight() / 2));
-            baozhas.add(Bitmap.createBitmap(baozha,
-                    (baozha.getWidth() / 4) * 1, baozha.getHeight() / 2,
-                    baozha.getWidth() / 4, baozha.getHeight() / 2));
-            baozhas.add(Bitmap.createBitmap(baozha,
-                    (baozha.getWidth() / 4) * 2, baozha.getHeight() / 2,
-                    baozha.getWidth() / 4, baozha.getHeight() / 2));
-            baozhas.add(Bitmap.createBitmap(baozha,
-                    (baozha.getWidth() / 4) * 3, baozha.getHeight() / 2,
-                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+//            baozhas.add(Bitmap.createBitmap(baozha, 0, 0,
+//                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+//            baozhas.add(Bitmap.createBitmap(baozha,
+//                    (baozha.getWidth() / 4) * 1, 0, baozha.getWidth() / 4,
+//                    baozha.getHeight() / 2));
+//            baozhas.add(Bitmap.createBitmap(baozha,
+//                    (baozha.getWidth() / 4) * 2, 0, baozha.getWidth() / 4,
+//                    baozha.getHeight() / 2));
+//            baozhas.add(Bitmap.createBitmap(baozha,
+//                    (baozha.getWidth() / 4) * 3, 0, baozha.getWidth() / 4,
+//                    baozha.getHeight() / 2));
+//
+//            baozhas.add(Bitmap.createBitmap(baozha, 0, baozha.getHeight() / 2,
+//                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+//            baozhas.add(Bitmap.createBitmap(baozha,
+//                    (baozha.getWidth() / 4) * 1, baozha.getHeight() / 2,
+//                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+//            baozhas.add(Bitmap.createBitmap(baozha,
+//                    (baozha.getWidth() / 4) * 2, baozha.getHeight() / 2,
+//                    baozha.getWidth() / 4, baozha.getHeight() / 2));
+//            baozhas.add(Bitmap.createBitmap(baozha,
+//                    (baozha.getWidth() / 4) * 3, baozha.getHeight() / 2,
+//                    baozha.getWidth() / 4, baozha.getHeight() / 2));
             //
             width=diren.getWidth()/4;
             height=diren.getHeight();
@@ -473,11 +527,13 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             if (y>bitmapHeight){
                 //敌机越界，清除敌机
                 mGameImageList.remove(this);
+
             }
             return bitmap;
         }
 
         private boolean isKill=false;//敌机是否被杀掉
+
         /**
          * 敌机收到攻击
          * */
@@ -504,6 +560,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
         }
 
+
+
         @Override
         public int getX() {
             return x;
@@ -513,6 +571,39 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         public int getY() {
             return y;
         }
+    }
+
+    /**
+     * 分解爆炸图片
+     * */
+    public List<Bitmap> getBaozhas(){
+         List<Bitmap> baozhas=new ArrayList<>();
+        //分解爆炸的照片
+        baozhas.add(Bitmap.createBitmap(baozha, 0, 0,
+                baozha.getWidth() / 4, baozha.getHeight() / 2));
+        baozhas.add(Bitmap.createBitmap(baozha,
+                (baozha.getWidth() / 4) * 1, 0, baozha.getWidth() / 4,
+                baozha.getHeight() / 2));
+        baozhas.add(Bitmap.createBitmap(baozha,
+                (baozha.getWidth() / 4) * 2, 0, baozha.getWidth() / 4,
+                baozha.getHeight() / 2));
+        baozhas.add(Bitmap.createBitmap(baozha,
+                (baozha.getWidth() / 4) * 3, 0, baozha.getWidth() / 4,
+                baozha.getHeight() / 2));
+
+        baozhas.add(Bitmap.createBitmap(baozha, 0, baozha.getHeight() / 2,
+                baozha.getWidth() / 4, baozha.getHeight() / 2));
+        baozhas.add(Bitmap.createBitmap(baozha,
+                (baozha.getWidth() / 4) * 1, baozha.getHeight() / 2,
+                baozha.getWidth() / 4, baozha.getHeight() / 2));
+        baozhas.add(Bitmap.createBitmap(baozha,
+                (baozha.getWidth() / 4) * 2, baozha.getHeight() / 2,
+                baozha.getWidth() / 4, baozha.getHeight() / 2));
+        baozhas.add(Bitmap.createBitmap(baozha,
+                (baozha.getWidth() / 4) * 3, baozha.getHeight() / 2,
+                baozha.getWidth() / 4, baozha.getHeight() / 2));
+
+        return baozhas;
     }
 
     /**
